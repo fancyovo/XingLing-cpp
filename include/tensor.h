@@ -5,54 +5,31 @@
 #include <memory>
 #include <cassert>
 
+// 简单起见，不实现transpose且禁用任何拷贝。
+// 同时直接暴露data，不提供下标访问接口
 class Tensor {
 public:
-    std::shared_ptr<float[]> data_;
+    float* h_ptr;
+    float* d_ptr;
     std::vector<int> shape_;
-    std::vector<int> strides_;
+    std::string device_;
+    bool cuda_avaliable;
 
 public:
-    Tensor(std::vector<int> shape);
+    Tensor(std::vector<int> shape, std::string device);
     ~Tensor();
-
-    // 强制浅拷贝，禁用深拷贝
-    Tensor(const Tensor& other) = default;
-    Tensor& operator=(const Tensor& other) = default;
-    Tensor clone() const;
-
-    // 输出
-    void print() const;
-
-    // 导入二进制文件
-    void load(const std::string& filename) const;
-
-    // 总大小、维度及形状
+    // 禁用任何拷贝
+    Tensor(const Tensor& other) = delete;
+    Tensor& operator=(const Tensor& other) = delete;
+    // 设备信息
+    void to(const std::string& device);
+    std::string device() const;
+    // 基本信息
     int size() const;
     int dims() const;
-    std::vector<int> shape() const;
+    // 基本构造
+    void reshape(const std::vector<int>& shape);
 
-    // 访问元素
-    int calc_index(const std::vector<int>& pos) const;
-    float& operator[](const std::vector<int>& pos);
-    const float& operator[](const std::vector<int>& pos) const;
-
-    // reshape相关操作
-    bool is_contiguous() const;
-    Tensor contiguous() const;
-    Tensor reshape(const std::vector<int>& shape) const;
-    Tensor transpose(const std::vector<int>& perm) const;
-
-    // 四则运算
-    Tensor operator+(const Tensor& other) const;
-    Tensor operator-(const Tensor& other) const;
-    Tensor operator*(const Tensor& other) const;
-    Tensor operator/(const Tensor& other) const;
-
-    Tensor operator+(float other) const;
-    Tensor operator-(float other) const;
-    Tensor operator*(float other) const;
-    Tensor operator/(float other) const;
-
-    // 自加，用于加速残差链接
-    void add(const Tensor& other);
-};
+    // 加载数据 
+    void load(const std::string& path);
+}; 

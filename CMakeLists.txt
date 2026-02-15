@@ -1,43 +1,74 @@
-cmake_minimum_required(VERSION 3.10)
-project(llm_cpp_engine)
-
-# 1. 忽略 Python 查找警告
-if(POLICY CMP0148)
-  cmake_policy(SET CMP0148 OLD)
-endif()
+cmake_minimum_required(VERSION 3.18)
+project(llm_cpp_engine LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
-add_compile_options(-O3 -march=native -fopenmp -ffast-math)
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# 2. 【核心修复】：强行从 python 中获取路径
-# 我们改用 --cmakedir (你刚才输出的报错提示里显示支持这个)
-execute_process(
-    COMMAND python3 -m pybind11 --cmakedir
-    OUTPUT_VARIABLE PYBIND11_DIR_FROM_PYTHON
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+# 1. 显式关闭 LTO，防止符号(fatbinData)被误删
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
-# 打印一下，方便 debug。你应该能看到一个 site-packages 里的路径
-message(STATUS "Pybind11 CMake Dir from Python: ${PYBIND11_DIR_FROM_PYTHON}")
+# 2. 设置架构
+if(NOT CMAKE_CUDA_ARCHITECTURES)
+  set(CMAKE_CUDA_ARCHITECTURES native)
+endif()
 
-# 3. 【强行指定】：不让 CMake 自己乱找，直接指定配置文件位置
-set(pybind11_DIR "${PYBIND11_DIR_FROM_PYTHON}")
-find_package(pybind11 REQUIRED)
-
-# 4. 再次确认找到的版本（目标是 2.10+）
-message(STATUS "ACTUAL Found pybind11 version: ${pybind11_VERSION}")
-message(STATUS "ACTUAL pybind11 include dirs: ${pybind11_INCLUDE_DIRS}")
-
-# 剩下的保持一致
-include_directories(${CMAKE_SOURCE_DIR}/include)
+find_package(CUDAToolkit REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
-set(SRCS 
-    "src/tensor.cpp" 
-    "src/ops.cpp" 
-    "src/inference.cpp" 
-    "src/bindings.cpp"
+# ===== pybind11 =====
+include(FetchContent)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG v2.11.1
+)
+# 防止 pybind11 内部开启 LTO
+set(PYBIND11_LTO_CXX_FLAGS "" CACHE INTERNAL "")
+FetchContent_MakeAvailable(pybind11)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+set(ENGINE_SRC
+    src/attn.cu
+    src/embedding.cu
+    src/ffn.cu
+    src/inference.cu
+    src/linear.cu
+    src/rmsnorm.cu
+    src/rope.cu
+    src/tensor.cu
+    src/transformer.cu
 )
 
-pybind11_add_module(llm_cpp_engine ${SRCS})
-target_link_libraries(llm_cpp_engine PRIVATE OpenMP::OpenMP_CXX)
+pybind11_add_module(llm_cpp_engine
+    src/bindings.cpp
+    ${ENGINE_SRC}
+)
+
+# 【关键修复】精细控制编译选项
+# 1. 对于 C++ 文件 (.cpp)，直接传给 g++
+target_compile_options(llm_cpp_engine PRIVATE 
+    $<$<COMPILE_LANGUAGE:CXX>:-O3 -march=native -fopenmp -ffast-math>
+)
+
+# 2. 对于 CUDA 文件 (.cu)：
+#    -O3 传给 nvcc
+#    -march=native -fopenmp -ffast-math 通过 -Xcompiler 强制传给宿主 g++
+#    这样 g++ 就能识别 AVX 指令了
+target_compile_options(llm_cpp_engine PRIVATE 
+    $<$<COMPILE_LANGUAGE:CUDA>:-O3 -Xcompiler=-march=native,-fopenmp,-ffast-math>
+)
+
+# 关闭 RDC (最简编译模式)
+set_target_properties(llm_cpp_engine PROPERTIES 
+    CUDA_SEPARABLE_COMPILATION OFF
+    INTERPROCEDURAL_OPTIMIZATION OFF
+)
+
+target_link_libraries(llm_cpp_engine PRIVATE
+    CUDA::cudart
+    CUDA::cublas
+    OpenMP::OpenMP_CXX
+)
