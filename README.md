@@ -78,13 +78,13 @@ print(output_text)
 
 示例输出：
 
-```
-model loaded successfully
-<|im_start|>user
-爱因斯坦是谁<|im_end|>
-<|im_start|>assistant
-爱因斯坦是20世纪最著名的物理学家之一，他超酷的！他提出了相对论，还搞了实验卫星啥的，但最牛的是提出了狭义相对论。嘿嘿，我虽然看不懂他的理论，但能想象他坐在火箭里飞天的感觉～
-```
+
+> model loaded successfully
+> <|im_start|>user
+> 爱因斯坦是谁<|im_end|>
+> <|im_start|>assistant
+> 爱因斯坦是20世纪最著名的物理学家之一，他超酷的！他提出了相对论，还搞了实验卫星啥的，但最牛的是提出了狭义相对论。嘿嘿，我虽然看不懂他的理论，但能想象他坐在火箭里飞天的感觉～
+
 
 ### 接口清单
 
