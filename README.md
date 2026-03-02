@@ -1,7 +1,7 @@
 # XingLing-Inference (C++/CUDA)
 
 <div align="center">
-    
+
 ![C++](https://img.shields.io/badge/C++-17-blue?logo=cplusplus)
 ![CUDA](https://img.shields.io/badge/CUDA-11.0%2B-green?logo=nvidia)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)
@@ -15,7 +15,7 @@
 
 ## 🌟 Overview
 
-**XingLing-Inference** is a lightweight yet powerful inference engine specifically built for the XingLing-0.68B [<sup>9</sup>](https://github.com/fancyovo/XingLing) model. 
+**XingLing-Inference** is a lightweight yet powerful inference engine specifically built for the [XingLing-0.68B](https://github.com/fancyovo/XingLing) model. 
 
 The core philosophy of this project is to **implement everything from scratch** to master the low-level mechanics of the Transformer architecture and CUDA programming. Every performance-critical kernel is handcrafted without relying on heavyweight libraries like cuBLAS or cuDNN.
 
@@ -139,6 +139,5 @@ This project is licensed under the Apache 2.0 License.
 
 ---
 *If this project helped you understand CUDA or Transformers better, please give it a Star! ⭐️*
-
 
 ---
