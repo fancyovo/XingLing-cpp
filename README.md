@@ -132,7 +132,7 @@ print(tokenizer.decode(output_ids))
 | **Tokenizer**       | Qwen3-8B (Vocab: 151669) |
 
 ## 🔗 Related Project
-This inference engine is built for the **XingLing** model. For details on the training process, dataset, and model architecture, please visit the Main Training Repository [<sup>9</sup>](https://github.com/fancyovo/XingLing).
+This inference engine is built for the **XingLing** model. For details on the training process, dataset, and model architecture, please visit the [Main Training Repository](https://github.com/fancyovo/XingLing).
 
 ## ⚖️ License
 This project is licensed under the Apache 2.0 License.
